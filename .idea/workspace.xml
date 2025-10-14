@@ -5,13 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a5d751ed-42e9-426c-9922-9f572224a7e4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/game/GamePanel.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/GameWindow.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/objects/Ball.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/objects/Brick.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/objects/Paddle.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,10 +36,11 @@
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin/Downloads/basic-arkanoid&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin/Downloads/basic-arkanoid-1&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -91,6 +86,8 @@
       <option name="presentableId" value="Default" />
       <updated>1760470333433</updated>
       <workItem from="1760470334814" duration="785000" />
+      <workItem from="1760474112642" duration="111000" />
+      <workItem from="1760474370382" duration="338000" />
     </task>
     <servers />
   </component>
