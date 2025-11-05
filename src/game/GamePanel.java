@@ -5,13 +5,25 @@ import game.objects.Brick;
 import game.objects.Paddle;
 
 import javax.sound.sampled.Clip;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.Arrays;
-import java.util.List;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+import java.awt.Color;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
-/** Arkanoid với 5 level; mỗi level có ảnh nền riêng. */
+/** Arkanoid 5 level; mỗi level có ảnh nền riêng. */
 public class GamePanel extends JPanel implements ActionListener, KeyListener, MouseListener {
 
     // ====== cấu hình ======
@@ -61,11 +73,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     public GamePanel(int w, int h) {
         this.WIDTH = w; this.HEIGHT = h;
 
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setPreferredSize(new java.awt.Dimension(WIDTH, HEIGHT));
         setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(this);
         addMouseListener(this);
+
+        // (Có thể bỏ 3 dòng debug sau khi mọi thứ OK)
+        System.out.println("CHK bg Map1: " + getClass().getClassLoader().getResource("backgrounds/Map1.jpg"));
+        System.out.println("CHK lvl1   : " + getClass().getClassLoader().getResource("levels/level1.txt"));
+        System.out.println("CHK pause  : " + getClass().getClassLoader().getResource("images/pause.png"));
 
         paddle = new Paddle(WIDTH/2.0 - 50, HEIGHT - 40, 100, 12, 6);
         ball   = new Ball(WIDTH/2.0, HEIGHT - 60, 8, 4, -4);
@@ -82,12 +99,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
     // ---------------- Levels ----------------
     private void loadLevel(int index) {
-        List<String> lines;
+        java.util.List<String> lines;
         String path = "levels/level" + (index + 1) + ".txt";
         try {
             lines = AssetLoader.readLines(path);
         } catch (Exception ex) {
-            lines = Arrays.asList(DEFAULT_LEVELS[index % DEFAULT_LEVELS.length]);
+            lines = java.util.Arrays.asList(DEFAULT_LEVELS[index % DEFAULT_LEVELS.length]);
         }
 
         rows = lines.size();
@@ -120,16 +137,41 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
                 "backgrounds/level" + n + ".png",
                 "backgrounds/level" + n + ".jpg",
                 "backgrounds/level" + n + ".jpeg",
-                "backgrounds/Map"   + n + ".png",   // tên bạn đang dùng
+                "backgrounds/Map"   + n + ".png",
                 "backgrounds/Map"   + n + ".jpg",
                 "backgrounds/Map"   + n + ".jpeg"
         };
+
+        ClassLoader cl = getClass().getClassLoader();
         for (String p : candidates) {
-            try {
-                Image img = AssetLoader.scaled(p, WIDTH, HEIGHT);
-                if (img != null) { levelBg = img; return; }
-            } catch (Exception ignored) {}
+            java.net.URL url = cl.getResource(p);
+            System.out.println("[BG check] " + p + " -> " + url);
+            if (url != null) {
+                try {
+                    levelBg = AssetLoader.scaled(p, WIDTH, HEIGHT);
+                    System.out.println("[BG use]   " + p);
+                    return;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
+
+        // Fallback: load trực tiếp từ đĩa (trường hợp resources chưa mark)
+        String[] roots = { "src/resources/", "resources/", "src/main/resources/" };
+        for (String root : roots) {
+            for (String p : candidates) {
+                java.io.File f = new java.io.File(root + p);
+                if (f.exists()) {
+                    try {
+                        levelBg = javax.imageio.ImageIO.read(f).getScaledInstance(WIDTH, HEIGHT, Image.SCALE_SMOOTH);
+                        System.out.println("[BG use FS] " + f.getPath());
+                        return;
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                }
+            }
+        }
+        System.out.println("[BG] Không tìm thấy ảnh nền cho level " + n);
     }
 
     private boolean noBricksLeft() {
@@ -223,10 +265,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
         // HUD
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        g2.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 14));
         g2.drawString("Score: " + score, 12, 20);
         g2.drawString("Lives: " + "❤".repeat(Math.max(0, lives)), 100, 20);
-        g2.drawString("Level: " + (levelIndex+1) + "/" + TOTAL_LEVELS, 200, 20);
+        g2.drawString("Level: " + (levelIndex+1) + "/5", 200, 20);
 
         // buttons
         int px = getWidth() - btnW - btnPad, py = 8;
@@ -251,7 +293,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         g2.setColor(new Color(0,0,0,120));
         g2.fillRect(0,0,getWidth(),getHeight());
         g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 18));
+        g2.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 18));
         String title = switch (state) {
             case MENU     -> "Press SPACE to Start";
             case PAUSE    -> "PAUSED - SPACE to Resume";
@@ -262,7 +304,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         };
         int tw = g2.getFontMetrics().stringWidth(title);
         g2.drawString(title, (getWidth()-tw)/2, getHeight()/3);
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        g2.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 14));
         g2.drawString("←/→: move paddle", 20, getHeight()-40);
         g2.drawString("Click  ⌂  for Home,  ||  for Pause", 20, getHeight()-20);
     }
