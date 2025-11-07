@@ -5,18 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a5d751ed-42e9-426c-9922-9f572224a7e4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/game/LevelManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/MusicHub.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/mainhall/MainHall.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/powerup/BonusBalls.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/powerup/ExpandPaddle.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/powerup/Gun.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/powerup/Lazer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/basic-arkanoid-1.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/basic-arkanoid-1.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/logic/CollisionUtil.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/logic/ServingController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/objects/HardBrick.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/objects/UnbreakableBrick.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/play/Bullet.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/play/LazerRay.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/play/Pickup.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/ui/HudOverlay.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/game/ui/SettingsOverlay.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/game/GamePanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/GamePanel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/game/GameWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/GameWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/resources/sounds/musicbackground.mp3" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/game/LevelManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/LevelManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/game/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/game/mainhall/MainHall.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/mainhall/MainHall.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/game/objects/Brick.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/objects/Brick.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -100,7 +104,7 @@
       <workItem from="1761625643357" duration="918000" />
       <workItem from="1761840240424" duration="13000" />
       <workItem from="1762335336625" duration="9063000" />
-      <workItem from="1762390600311" duration="4731000" />
+      <workItem from="1762390600311" duration="14489000" />
     </task>
     <servers />
   </component>

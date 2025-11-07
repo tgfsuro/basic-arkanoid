@@ -1,34 +1,29 @@
 package game;
 
+import game.logic.CollisionUtil;
+import game.logic.ServingController;
+
 import game.objects.Ball;
 import game.objects.Brick;
 import game.objects.Paddle;
+
+import game.play.Bullet;
+import game.play.LazerRay;
+import game.play.Pickup;
+
 import game.powerup.BonusBalls;
 import game.powerup.ExpandPaddle;
 import game.powerup.Gun;
 import game.powerup.Lazer;
 
+import game.ui.HudOverlay;
+import game.ui.SettingsOverlay;
+
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,7 +32,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
     // ===== màn hình & loop =====
     private final int WIDTH, HEIGHT;
-    private final Timer timer = new Timer(1000 / 60, this); // javax.swing.Timer
+    private final Timer timer = new Timer(1000 / 60, this);
 
     // ===== state =====
     private enum State { MENU, PLAY, PAUSE, SETTINGS, GAMEOVER, WIN }
@@ -46,27 +41,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     // ===== managers =====
     private final LevelManager levels;
     private final MusicHub music = new MusicHub();
+    private final ServingController serveCtl = new ServingController();
 
     // ===== game objects =====
     private final List<Ball> balls = new ArrayList<>();
     private Paddle paddle;
 
-    // ===== UI buttons =====
-    private final Rectangle pauseBtn = new Rectangle();
-    private final Rectangle homeBtn  = new Rectangle();
-    private final Rectangle settingsBtn = new Rectangle();
-    private final int btnW = 26, btnH = 26, btnPad = 10;
-    private Image pauseIcon, homeIcon, gearIcon;
-    private Image mainBg;
+    // ===== UI / HUD =====
+    private final HudOverlay hud = new HudOverlay();
+    private final SettingsOverlay settingsUI = new SettingsOverlay();
 
-    // ===== HUD =====
+    private Image pauseIcon, homeIcon, gearIcon, mainBg;
+
+    // ===== HUD data =====
     private int score = 0, lives = 3, levelIndex = 0; // 0-based
     private final int TOTAL_LEVELS = 5;
-
-    // ===== Settings overlay =====
-    private final Rectangle btnMusicToggle = new Rectangle();
-    private final Rectangle btnMainMenu    = new Rectangle();
-    private final Rectangle btnBack        = new Rectangle();
 
     // ===== rng & pickups =====
     private final Random rng = new Random();
@@ -74,7 +63,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
     // ===== bullets & laser =====
     private final List<Bullet> bullets = new ArrayList<>();
-    private final List<LaserRay> lasers = new ArrayList<>();
+    private final List<LazerRay> lasers = new ArrayList<>();
     private long gunUntil = 0, nextBulletAt = 0;
 
     // ===== expand paddle =====
@@ -95,17 +84,37 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
         levels = new LevelManager(w, h);
         paddle = new Paddle(WIDTH / 2.0 - 50, HEIGHT - 40, 100, 12, 6);
-        balls.add(new Ball(WIDTH / 2.0, HEIGHT - 60, 8, 4, -4));
+        Ball first = new Ball(WIDTH / 2.0, HEIGHT - 60, 8, 0, 0);
+        balls.add(first);
 
-        try { pauseIcon  = AssetLoader.scaled("images/pause.png",  btnW, btnH); } catch (Exception ignored) {}
-        try { homeIcon   = AssetLoader.scaled("images/home.png",   btnW, btnH); } catch (Exception ignored) {}
-        try { gearIcon   = AssetLoader.scaled("images/gear.png",   btnW, btnH); } catch (Exception ignored) {}
+        try { pauseIcon  = AssetLoader.scaled("images/pause.png",  26, 26); } catch (Exception ignored) {}
+        try { homeIcon   = AssetLoader.scaled("images/home.png",   26, 26); } catch (Exception ignored) {}
+        try { gearIcon   = AssetLoader.scaled("images/gear.png",   26, 26); } catch (Exception ignored) {}
         try { mainBg     = AssetLoader.scaled("backgrounds/mainbackground.jpg", w, h); } catch (Exception ignored) {}
 
         levels.load(levelIndex);
-        music.playMenu(); // khởi động ở MENU → phát nhạc sảnh
+        music.playMenu();
+
+        // bắt đầu ở chế độ serving
+        serveCtl.enterServing(paddle, first);
 
         timer.start();
+    }
+
+    // ============ API từ MainHall/GameWindow ============
+    public void prepareLevel1FromHall() {
+        music.stop();
+        levelIndex = 0;
+        levels.load(levelIndex);
+        score = 0; lives = 3;
+
+        balls.clear();
+        Ball b = new Ball(WIDTH/2.0, HEIGHT - 60, 8, 0, 0);
+        balls.add(b);
+        serveCtl.enterServing(paddle, b);
+
+        state = State.PLAY;
+        music.playLevel(levelIndex);
     }
 
     // ================= loop =================
@@ -115,69 +124,71 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     }
 
     private void update() {
-        // paddle
         if (left)  paddle.move(-1, WIDTH);
         if (right) paddle.move( 1, WIDTH);
 
-        // balls
+        // serving?
+        if (serveCtl.isServing()) {
+            serveCtl.updateWhileServing(paddle, balls.get(0));
+            updatePickupsAndProjectiles();
+            return;
+        }
+
+        // bóng đang bay
         for (int i = 0; i < balls.size(); i++) {
             Ball b = balls.get(i);
             b.update();
 
-            // walls
-            if (b.x - b.r < 0)      { b.x = b.r;           b.vx = -b.vx; }
-            if (b.x + b.r > WIDTH)  { b.x = WIDTH - b.r;   b.vx = -b.vx; }
-            if (b.y - b.r < 0)      { b.y = b.r;           b.vy = -b.vy; }
+            CollisionUtil.reflectWithWalls(b, WIDTH, HEIGHT);
 
             // lọt đáy
             if (b.y - b.r > HEIGHT) { balls.remove(i--); continue; }
 
             // paddle
-            if (b.getRect().intersects(paddle.getRect()) && b.vy > 0) {
-                b.y = paddle.y - b.r - 1;
-                b.vy = -b.vy;
-                if (left && !right)  b.vx -= 1;
-                if (right && !left)  b.vx += 1;
-            }
+            CollisionUtil.ballBounceOnPaddle(b, paddle);
 
             // bricks
-            Rectangle br = b.getRect();
-            for (int j = 0; j < levels.bricks.length; j++) {
-                Brick brick = levels.bricks[j];
-                if (brick == null) continue;
-                if (!br.intersects(brick.getRect())) continue;
-
-                // phản xạ cơ bản
-                Rectangle r = brick.getRect();
-                int leftO   = (int)(br.x + br.width) - r.x;
-                int rightO  = (int)(r.x + r.width) - br.x;
-                int topO    = (int)(br.y + br.height) - r.y;
-                int bottomO = (int)(r.y + r.height) - br.y;
-                if (Math.min(leftO, rightO) < Math.min(topO, bottomO)) b.vx = -b.vx; else b.vy = -b.vy;
-
-                // phá gạch
-                Brick removed = levels.bricks[j];
-                levels.bricks[j] = null;
+            int idx = CollisionUtil.hitBrickIndex(b, levels.bricks);
+            if (idx >= 0) {
+                Brick removed = levels.bricks[idx];
+                levels.bricks[idx] = null;
                 score += 10;
-
-                // 25% rơi power-up
-                if (removed != null && rng.nextDouble() < 0.25) {
-                    pickups.add(Pickup.randomAt(removed.x + removed.w / 2.0, removed.y + removed.h / 2.0));
-                }
-                break;
+                if (removed != null && rng.nextDouble() < 0.25)
+                    pickups.add(Pickup.randomAt(removed.x + removed.w/2.0, removed.y + removed.h/2.0));
             }
         }
 
-        // hết bóng → trừ mạng / respawn TRÊN PADDLE và PAUSE
+        // hết bóng
         if (balls.isEmpty()) {
             lives--;
             if (lives <= 0) { state = State.GAMEOVER; music.stop(); return; }
-            respawnBallOnPaddle();           // đặt bóng lên paddle hiện tại
-            state = State.PAUSE;             // tạm dừng – ấn SPACE để đánh tiếp
-            music.pause();
+            // quay về serving-mode
+            Ball b = new Ball(paddle.x + paddle.w/2.0, paddle.y - 9, 8, 0, 0);
+            balls.add(b);
+            serveCtl.enterServing(paddle, b);
         }
 
-        // pickups rơi
+        updatePickupsAndProjectiles();
+
+        // cleared level?
+        if (levels.cleared()) {
+            if (levelIndex + 1 < TOTAL_LEVELS) {
+                levelIndex++;
+                levels.load(levelIndex);
+                resetBallPaddle();
+                serveCtl.enterServing(paddle, balls.get(0));
+                music.playLevel(levelIndex);
+            } else {
+                state = State.WIN;
+                music.stop();
+            }
+        }
+    }
+
+    private void updatePickupsAndProjectiles() {
+        long now = System.currentTimeMillis();
+
+        // pickups
         for (int i = 0; i < pickups.size(); i++) {
             Pickup p = pickups.get(i);
             p.y += p.vy;
@@ -189,13 +200,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         }
 
         // expand timer
-        long now = System.currentTimeMillis();
         if (expandUntil > 0 && now >= expandUntil) {
             if (paddleOrigW != null) paddle.w = paddleOrigW;
             expandUntil = 0; paddleOrigW = null;
         }
 
-        // gun auto fire
+        // gun auto
         if (now < gunUntil && now >= nextBulletAt) {
             bullets.add(new Bullet(paddleCenterX(), (int)paddle.y, -12));
             nextBulletAt = now + 200;
@@ -219,32 +229,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             }
         }
 
-        // lasers lifetime
+        // lasers
         for (int i = 0; i < lasers.size(); i++) {
             if (System.currentTimeMillis() >= lasers.get(i).endTime) lasers.remove(i--);
         }
-
-        // cleared level?
-        if (levels.cleared()) {
-            if (levelIndex + 1 < TOTAL_LEVELS) {
-                levelIndex++;
-                levels.load(levelIndex);
-                resetBallPaddle();
-                state = State.PAUSE;     // dừng 1 nhịp cho người chơi
-                music.playLevel(levelIndex);
-                music.pause();
-            } else {
-                state = State.WIN;
-                music.stop();
-            }
-        }
-    }
-
-    private void respawnBallOnPaddle() {
-        double cx = paddle.x + paddle.w / 2.0;
-        double cy = paddle.y - 16; // ngay trên paddle
-        balls.clear();
-        balls.add(new Ball(cx, cy, 8, 0, -4)); // thẳng lên
     }
 
     // ============== PowerUps API ==============
@@ -258,6 +246,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     }
 
     public void spawnBonusBalls(int count) {
+        if (serveCtl.isServing()) return;
         Ball ref = balls.get(0);
         for (int i = 0; i < count; i++) {
             double vx = (i % 2 == 0) ? -3.0 : 3.0;
@@ -272,7 +261,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             if (b == null) continue;
             if (x + 4 >= b.x && x - 4 <= b.x + b.w) { levels.bricks[i] = null; score += 10; }
         }
-        lasers.add(new LaserRay(x, System.currentTimeMillis() + 120)); // chớp 120ms
+        lasers.add(new LazerRay(x, System.currentTimeMillis() + 120));
     }
 
     public void enableGun(long ms) {
@@ -301,8 +290,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             g2.drawImage(mainBg, 0, 0, null);
         } else if (levels.background() != null) {
             g2.drawImage(levels.background(), 0, 0, null);
-            g2.setColor(new Color(0, 0, 0, 30));
-            g2.fillRect(0, 0, getWidth(), getHeight());
         } else {
             g2.setPaint(new GradientPaint(0, 0, new Color(10, 10, 20), 0, getHeight(), Color.BLACK));
             g2.fillRect(0, 0, getWidth(), getHeight());
@@ -320,143 +307,121 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             for (Bullet b : bullets) g2.fillRect(b.x - 2, b.y - 8, 4, 8);
 
             g2.setColor(new Color(0, 255, 255, 180));
-            for (LaserRay l : lasers) {
+            for (LazerRay l : lasers) {
                 g2.fillRect(l.x - 2, 0, 4, (int)paddle.y);
                 g2.fillOval(l.x - 4, (int)paddle.y - 6, 8, 8);
             }
 
-            // HUD
-            g2.setColor(Color.WHITE);
-            g2.setFont(new Font("Monospaced", Font.PLAIN, 14));
-            g2.drawString("Score: " + score, 12, 20);
-            g2.drawString("Lives: " + Math.max(0, lives), 120, 20);
-            g2.drawString("Level: " + (levelIndex + 1) + "/5", 200, 20);
-
-            // buttons (có Fallback nếu thiếu icon)
-            int px = getWidth() - btnW - btnPad, py = 8;
-
-            if (pauseIcon != null) g2.drawImage(pauseIcon, px, py, null);
-            else { g2.setColor(Color.LIGHT_GRAY); g2.fillRect(px+4,py+3,6,20); g2.fillRect(px+16,py+3,6,20); }
-            pauseBtn.setBounds(px, py, btnW, btnH);
-
-            int hx = px - btnW - 8;
-            if (homeIcon != null) g2.drawImage(homeIcon, hx, py, null);
-            else { g2.setColor(Color.LIGHT_GRAY); int[] xs={hx+3,hx+13,hx+23,hx+23,hx+3}; int[] ys={py+14,py+4,py+14,py+24,py+24}; g2.fillPolygon(xs,ys,5); }
-            homeBtn.setBounds(hx, py, btnW, btnH);
-
-            int sx = hx - btnW - 8;
-            if (gearIcon != null) g2.drawImage(gearIcon, sx, py, null);
-            else { g2.setColor(Color.LIGHT_GRAY); g2.drawOval(sx+4,py+4,18,18); g2.drawLine(sx+13,py+4,sx+13,py+22); g2.drawLine(sx+4,py+13,sx+22,py+13); }
-            settingsBtn.setBounds(sx, py, btnW, btnH);
+            // HUD & buttons
+            hud.drawTopHUD(g2, score, Math.max(0, lives), (levelIndex + 1) + "/5");
+            hud.drawTopButtons(g2, getWidth(), getHeight(), pauseIcon, homeIcon, gearIcon);
         }
 
-        drawOverlay(g2);
-    }
-
-    private void drawOverlay(Graphics2D g2) {
-        if (state != State.PLAY) {
-            g2.setColor(new Color(0, 0, 0, 120));
+        // Settings/GameOver/Win overlays
+        if (state == State.SETTINGS) {
+            settingsUI.draw(g2, music.isEnabled(), getWidth(), getHeight());
+        } else if (state == State.GAMEOVER || state == State.WIN) {
+            g2.setColor(new Color(0, 0, 0, 110));
             g2.fillRect(0, 0, getWidth(), getHeight());
-        }
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 18));
-        String title = switch (state) {
-            case MENU -> "Press SPACE to Start";
-            case PAUSE -> "PAUSED - SPACE to Resume";
-            case SETTINGS -> "SETTINGS";
-            case GAMEOVER -> "GAME OVER - Press R to Retry";
-            case WIN -> (levelIndex + 1 < TOTAL_LEVELS)
-                    ? "LEVEL CLEARED - Press N for Next"
-                    : "ALL LEVELS CLEARED - Press R to Restart";
-            default -> "";
-        };
-        if (state != State.PLAY) {
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Monospaced", Font.PLAIN, 18));
+            String title = (state == State.GAMEOVER)
+                    ? "GAME OVER - Press R to Retry"
+                    : ((levelIndex + 1 < 5) ? "LEVEL CLEARED - Press N for Next"
+                    : "ALL LEVELS CLEARED - Press R to Restart");
             int tw = g2.getFontMetrics().stringWidth(title);
             g2.drawString(title, (getWidth() - tw) / 2, getHeight() / 3);
         }
-
-        if (state == State.SETTINGS) {
-            int bw = 260, bh = 36, gap = 14, cx = (getWidth() - bw) / 2, cy = getHeight() / 2;
-            btnMusicToggle.setBounds(cx, cy, bw, bh);
-            drawBtn(g2, btnMusicToggle, music.isEnabled() ? "Music: ON (pause/resume)" : "Music: OFF");
-            btnMainMenu.setBounds(cx, cy + bh + gap, bw, bh);
-            drawBtn(g2, btnMainMenu, "Return to MAIN MENU");
-            btnBack.setBounds(cx, cy + 2 * (bh + gap), bw, bh);
-            drawBtn(g2, btnBack, "Back");
-        }
-    }
-
-    private void drawBtn(Graphics2D g2, Rectangle r, String text) {
-        g2.setColor(new Color(255, 255, 255, 30));
-        g2.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
-        g2.setColor(Color.WHITE);
-        g2.drawRoundRect(r.x, r.y, r.width, r.height, 10, 10);
-        int tw = g2.getFontMetrics().stringWidth(text), th = g2.getFontMetrics().getAscent();
-        g2.drawString(text, r.x + (r.width - tw) / 2, r.y + (r.height + th) / 2 - 3);
     }
 
     // ================= input =================
     @Override public void keyTyped(KeyEvent e) {}
 
     @Override public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_LEFT)  left = true;
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) right = true;
+        int k = e.getKeyCode();
 
-        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            if (state == State.MENU) { state = State.PLAY; music.playLevel(levelIndex); }
-            else if (state == State.PLAY) { state = State.PAUSE; music.pause(); }
-            else if (state == State.PAUSE) { state = State.PLAY; music.resume(); }
+        // ← hoặc A | → hoặc D
+        if (k == KeyEvent.VK_LEFT  || k == KeyEvent.VK_A) left  = true;
+        if (k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_D) right = true;
+
+        // SPACE: nếu đang serving -> bắn
+        if (k == KeyEvent.VK_SPACE) {
+            if (state == State.MENU) {
+                prepareLevel1FromHall(); return;
+            } else if (serveCtl.isServing()) {
+                if (serveCtl.launch(paddle, balls.get(0))) {
+                    state = State.PLAY; music.resume();
+                }
+                return;
+            }
         }
 
-        if (e.getKeyCode() == KeyEvent.VK_N && state == State.WIN) {
+        // P: toggle pause (chỉ khi đã bắn)
+        if (k == KeyEvent.VK_P && state != State.MENU && state != State.SETTINGS) {
+            if (state == State.PLAY && !serveCtl.isServing()) { state = State.PAUSE; music.pause(); }
+            else if (state == State.PAUSE)                    { state = State.PLAY;  music.resume(); }
+        }
+
+        if (k == KeyEvent.VK_N && state == State.WIN) {
             if (levelIndex + 1 < TOTAL_LEVELS) {
                 levelIndex++; levels.load(levelIndex); resetBallPaddle();
-                state = State.PAUSE; music.playLevel(levelIndex); music.pause();
+                serveCtl.enterServing(paddle, balls.get(0));
+                music.playLevel(levelIndex);
             } else {
                 state = State.MENU; resetAll(); music.playMenu();
             }
         }
 
-        if (e.getKeyCode() == KeyEvent.VK_R && (state == State.GAMEOVER || state == State.WIN)) {
-            resetAll(); state = State.PAUSE; music.playLevel(levelIndex); music.pause();
+        if (k == KeyEvent.VK_R && (state == State.GAMEOVER || state == State.WIN)) {
+            resetAll(); serveCtl.enterServing(paddle, balls.get(0)); music.playLevel(levelIndex);
         }
     }
 
     @Override public void keyReleased(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_LEFT)  left = false;
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) right = false;
+        int k = e.getKeyCode();
+        if (k == KeyEvent.VK_LEFT  || k == KeyEvent.VK_A) left  = false;
+        if (k == KeyEvent.VK_RIGHT || k == KeyEvent.VK_D) right = false;
     }
 
     @Override public void mouseClicked(MouseEvent e) {
         Point p = e.getPoint();
 
-        if (settingsBtn.contains(p) && state != State.MENU) {
-            state = State.SETTINGS; repaint(); return;
-        }
-        if (pauseBtn.contains(p) && state != State.MENU) {
-            if (state == State.PLAY) { state = State.PAUSE; music.pause(); }
-            else if (state == State.PAUSE) { state = State.PLAY; music.resume(); }
-            repaint(); return;
-        }
-        if (homeBtn.contains(p)) {
-            state = State.MENU; resetAll(); music.playMenu(); repaint(); return;
+        // buttons
+        if (state != State.MENU) {
+            if (hud.settingsBtn().contains(p)) { state = State.SETTINGS; repaint(); return; }
+            if (hud.pauseBtn().contains(p)) {
+                if (state == State.PLAY && !serveCtl.isServing()) { state = State.PAUSE; music.pause(); }
+                else if (state == State.PAUSE) { state = State.PLAY; music.resume(); }
+                repaint(); return;
+            }
+            if (hud.homeBtn().contains(p)) { goToMainMenu(); return; }
         }
 
+        // settings overlay
         if (state == State.SETTINGS) {
-            if (btnMusicToggle.contains(p)) {
+            if (settingsUI.btnMusicToggle.contains(p)) {
                 music.setEnabled(!music.isEnabled(), state == State.MENU, levelIndex);
                 repaint(); return;
-            } else if (btnMainMenu.contains(p)) {
-                state = State.MENU; resetAll(); music.playMenu(); repaint(); return;
-            } else if (btnBack.contains(p)) {
+            } else if (settingsUI.btnMainMenu.contains(p)) {
+                goToMainMenu(); return;
+            } else if (settingsUI.btnBack.contains(p)) {
                 state = State.PAUSE; repaint(); return;
             }
         }
     }
 
+    /** Thoát ra sảnh. */
+    private void goToMainMenu() {
+        try { music.stop(); } catch (Exception ignored) {}
+        java.awt.Window win = javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (win != null) win.dispose();
+        javax.swing.SwingUtilities.invokeLater(() -> new game.mainhall.MainHall());
+    }
+
     private void resetBallPaddle() {
         paddle.x = WIDTH / 2.0 - paddle.w / 2.0;
-        balls.clear(); balls.add(new Ball(WIDTH/2.0, HEIGHT - 60, 8, 4, -4));
+        balls.clear();
+        balls.add(new Ball(WIDTH/2.0, HEIGHT - 60, 8, 0, 0));
         pickups.clear(); bullets.clear(); lasers.clear();
         expandUntil = 0; paddleOrigW = null; gunUntil = 0; nextBulletAt = 0;
     }
@@ -471,41 +436,4 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     @Override public void mouseReleased(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) {}
-
-    // ================= helper inner types =================
-    private static class Pickup {
-        enum Type { EXPAND, BONUS_BALLS, LAZER, GUN }
-        double x, y; int size = 18; double vy = 2.0; Type type;
-        static Pickup randomAt(double x, double y) {
-            Pickup p = new Pickup(); p.x = x; p.y = y;
-            p.type = Type.values()[(int)(Math.random() * 4)];
-            return p;
-        }
-        Rectangle getRect() { return new Rectangle((int)(x - size/2), (int)(y - size/2), size, size); }
-        void draw(Graphics2D g2) {
-            Color c = switch (type) {
-                case EXPAND -> new Color(50, 200, 255);
-                case BONUS_BALLS -> new Color(255, 200, 50);
-                case LAZER -> new Color(120, 255, 120);
-                case GUN -> new Color(255, 100, 140);
-            };
-            g2.setColor(c);
-            g2.fillOval((int)(x - size/2), (int)(y - size/2), size, size);
-            g2.setColor(Color.BLACK);
-            g2.setFont(new Font("Monospaced", Font.BOLD, 12));
-            String s = switch (type) { case EXPAND -> "E"; case BONUS_BALLS -> "B"; case LAZER -> "L"; case GUN -> "G"; };
-            g2.drawString(s, (int)x - 4, (int)y + 4);
-        }
-    }
-
-    private static class Bullet {
-        int x, y, vy;
-        Bullet(int x, int y, int vy) { this.x = x; this.y = y; this.vy = vy; }
-        Rectangle getRect() { return new Rectangle(x - 2, y - 8, 4, 8); }
-    }
-
-    private static class LaserRay {
-        int x; long endTime;
-        LaserRay(int x, long endTime) { this.x = x; this.endTime = endTime; }
-    }
 }
