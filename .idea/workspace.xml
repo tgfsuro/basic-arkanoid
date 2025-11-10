@@ -5,29 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a5d751ed-42e9-426c-9922-9f572224a7e4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/game/play/Drop.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/play/DropManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/game/play/ProjectileManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/GamePanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/GamePanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/LevelManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/LevelManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/objects/Brick.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/objects/Brick.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/objects/HardBrick.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/objects/HardBrick.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/objects/UnbreakableBrick.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/objects/UnbreakableBrick.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/play/Bullet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/play/Bullet.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/play/LazerRay.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/play/LazerRay.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/powerup/BonusBalls.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/powerup/BonusBalls.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/powerup/ExpandPaddle.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/powerup/ExpandPaddle.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/powerup/Gun.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/powerup/Gun.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/powerup/Lazer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/powerup/Lazer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/ui/HudOverlay.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/ui/HudOverlay.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/ui/SettingsOverlay.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/ui/SettingsOverlay.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/resources/levels/level1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/resources/levels/level1.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/resources/levels/level2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/resources/levels/level2.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/resources/levels/level3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/resources/levels/level3.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/resources/levels/level4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/resources/levels/level4.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/resources/levels/level5.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/resources/levels/level5.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +89,7 @@
       <workItem from="1761625643357" duration="918000" />
       <workItem from="1761840240424" duration="13000" />
       <workItem from="1762335336625" duration="9063000" />
-      <workItem from="1762390600311" duration="24910000" />
+      <workItem from="1762390600311" duration="26355000" />
     </task>
     <servers />
   </component>
