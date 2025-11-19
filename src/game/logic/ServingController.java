@@ -1,3 +1,4 @@
+/** kê bóng: lắc trái phải trên pad, space để bắn bóng*/
 package game.logic;
 
 import game.objects.Ball;

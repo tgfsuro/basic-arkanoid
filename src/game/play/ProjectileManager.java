@@ -1,3 +1,4 @@
+/** đạn 2 mép, lazer ở giữa, xuyên hay không xuyên gạch*/
 package game.play;
 
 import game.LevelManager;

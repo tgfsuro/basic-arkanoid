@@ -1,5 +1,9 @@
+/** controller, view: giữ state (play, pause...) vòng lặp timer -> update() -> repaint chứa paddle
+ * danh sách ball, LevelManager, DropManager, ProjectileManager, MusicHub.
+ */
 package game;
 
+import game.mainhall.PaddleSkinStore;
 import game.objects.Ball;
 import game.objects.Brick;
 import game.objects.Paddle;
@@ -21,8 +25,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     private enum State { MENU, PLAY, PAUSE, SETTINGS, GAMEOVER, WIN }
     private State state = State.MENU;
 
-    // === KÍCH THƯỚC PADDLE MỚI (nhỏ hơn) ===
-    private static final int PADDLE_W_DEFAULT = 96 ;
+    // === PADDLE SIZE (đã giảm) ===
+    private static final int PADDLE_W_DEFAULT = 96;
     private static final int PADDLE_H_DEFAULT = 12;
 
     private final LevelManager levels;
@@ -85,8 +89,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
                 PADDLE_H_DEFAULT,
                 5.8
         );
-        // dùng skin đang lưu trong thư mục của bạn
-        paddle.setSkinPath("src/game/mainhall/paddle/paddle1.png");
+        // ✅ LẤY ẢNH SKIN NGƯỜI DÙNG ĐÃ CHỌN Ở MAIN HALL
+        paddle.setSkinImage(PaddleSkinStore.getImage());
 
         balls.add(new Ball(WIDTH / 2.0, HEIGHT - 60, 8, 0, 0));
 
@@ -100,6 +104,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         timer.start();
     }
 
+    /** Gọi khi bấm PLAY từ MainHall. */
     public void prepareLevel1FromHall() {
         music.stop();
         levelIndex = 0;
@@ -228,7 +233,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
     public void activateExpand(long ms) {
         if (paddleOrigW == null) paddleOrigW = paddle.w;
-        paddle.w = (int)Math.round(paddle.w * 1.5);   // thu bớt hệ số nở
+        paddle.w = (int)Math.round(paddle.w * 1.5);
         if (paddle.x + paddle.w > WIDTH - 10) paddle.x = WIDTH - 10 - paddle.w;
         expandUntil = System.currentTimeMillis() + ms;
     }

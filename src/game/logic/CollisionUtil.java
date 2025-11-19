@@ -1,3 +1,4 @@
+/** va chạm tường, paddle, tính hướng chạm gạch*/
 package game.logic;
 
 import game.objects.Ball;

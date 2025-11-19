@@ -1,3 +1,4 @@
+/** ảnh, nhạc fallback nhiều nơi*/
 package game;
 
 import javax.imageio.ImageIO;

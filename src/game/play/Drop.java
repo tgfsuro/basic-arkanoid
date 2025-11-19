@@ -1,3 +1,4 @@
+/** Drop + DropManager + Pickup*/
 package game.play;
 
 import java.awt.*;

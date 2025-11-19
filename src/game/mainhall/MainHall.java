@@ -1,3 +1,4 @@
+/** chọn & nhớ skin*/
 package game.mainhall;
 
 import game.AssetLoader;

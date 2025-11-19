@@ -1,3 +1,4 @@
+/** đọc map + rải powerup theo ký tự hoặc auto*/
 package game;
 
 import game.objects.Brick;

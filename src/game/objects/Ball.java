@@ -1,3 +1,4 @@
+/** tọa độ, vận tốc, vẽ hình tròn*/
 package game.objects;
 
 import java.awt.*;
